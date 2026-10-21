@@ -16,6 +16,9 @@ versioned images, and pull those artifacts on deployment hosts.
 - Images use the `linux/amd64` platform and exact version, major/minor, and
   `latest` tags. Docker/metadata-action supplies version/source OCI labels.
 - Only official `actions/*`, `docker/*`, and the existing `gh` CLI are used.
+- Downloadable environment assets use `default.env.example` and
+  `default.env.development.example`; save/copy them to the corresponding local
+  dotfiles. This avoids GitHub's leading-dot asset-name normalization.
 
 The public source history starts from its own license/import history. Preserve
 that separation when syncing private changes; do not push private historical

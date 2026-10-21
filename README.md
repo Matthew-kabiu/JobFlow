@@ -14,7 +14,7 @@ No Node.js installation or source build is needed.
 mkdir jobflow
 cd jobflow
 curl -fsSLO https://github.com/Matthew-kabiu/JobFlow/releases/latest/download/docker-compose.yml
-curl -fsSLO https://github.com/Matthew-kabiu/JobFlow/releases/latest/download/.env.example
+curl -fsSL -o .env.example https://github.com/Matthew-kabiu/JobFlow/releases/latest/download/default.env.example
 cp .env.example .env
 docker compose up -d
 ```

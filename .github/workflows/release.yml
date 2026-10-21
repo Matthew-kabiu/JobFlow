@@ -76,8 +76,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          # GitHub normalizes leading-dot asset names; use explicit stable names.
+          cp .env.example default.env.example
+          cp .env.development.example default.env.development.example
           gh release create "$GITHUB_REF_NAME" \
-            docker-compose.yml .env.example .env.development.example README.md \
+            docker-compose.yml default.env.example default.env.development.example README.md \
             --verify-tag --title "JobFlow $GITHUB_REF_NAME" --generate-notes \
             --notes "Frontend: ${FRONTEND_IMAGE}:${VERSION}
           Backend: ${BACKEND_IMAGE}:${VERSION}
@@ -105,8 +108,10 @@ jobs:
           done
           test "$READY" = true
           VERSION="${GITHUB_REF_NAME#v}"
+          cp .env.example default.env.example
+          cp .env.development.example default.env.development.example
           gh release create "$GITHUB_REF_NAME" \
-            docker-compose.yml .env.example .env.development.example README.md \
+            docker-compose.yml default.env.example default.env.development.example README.md \
             --verify-tag --title "JobFlow $GITHUB_REF_NAME" --generate-notes \
             --notes "Canonical release: https://github.com/Matthew-kabiu/JobFlow/releases/tag/${GITHUB_REF_NAME}
           Frontend: ${FRONTEND_IMAGE}:${VERSION}

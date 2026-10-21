@@ -1,5 +1,15 @@
 import type { SearchFilters, SearchResult } from "@/lib/job-types";
 import { ROUTES } from "@/lib/routes";
+import type { PublicConfig } from "../../../../shared/contracts";
+import { z } from "zod";
+
+const publicUrl = z.union([z.literal(""), z.string().url().refine((value) => {
+  const url = new URL(value);
+  return ["https:", "http:"].includes(url.protocol) && !url.username && !url.password;
+})]);
+const publicConfigSchema = z.object({
+  repoUrl: publicUrl, companyUrl: publicUrl, companyName: z.string().max(120), version: z.string().max(40),
+});
 
 const messages: Record<string, string> = {
   INVALID_SEARCH: "Check your search fields and salary range, then try again.",
@@ -10,6 +20,21 @@ const messages: Record<string, string> = {
 export class ApiClientError extends Error {}
 
 class ApiClient {
+  async publicConfig(signal?: AbortSignal): Promise<PublicConfig> {
+    try {
+      const timeout = AbortSignal.timeout(8_000);
+      const response = await fetch(ROUTES.api.config, {
+        cache: "no-store", signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+      });
+      const body = await response.json();
+      const parsed = publicConfigSchema.safeParse(body?.data);
+      if (!response.ok || !body?.success || !parsed.success) throw new Error("Invalid configuration");
+      return parsed.data;
+    } catch {
+      throw new ApiClientError("Could not load JobFlow configuration. Please try again.");
+    }
+  }
+
   async search(filters: SearchFilters, signal?: AbortSignal): Promise<SearchResult> {
     const controller = new AbortController();
     const abort = () => controller.abort();

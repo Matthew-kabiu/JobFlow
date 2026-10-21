@@ -1,5 +1,6 @@
 export const ROUTES = {
   health: "/health",
+  config: "/api/v1/config",
   providers: "/api/v1/providers",
   search: "/api/v1/jobs/search",
 } as const;

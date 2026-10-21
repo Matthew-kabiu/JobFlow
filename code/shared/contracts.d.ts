@@ -2,6 +2,13 @@ export type ProviderId = "himalayas" | "jobicy" | "reliefweb";
 export type SalaryPeriod = "hourly" | "weekly" | "fortnightly" | "monthly" | "annual";
 export type SortOption = "relevance" | "date" | "salary_asc" | "salary_desc";
 
+export interface PublicConfig {
+  repoUrl: string;
+  companyName: string;
+  companyUrl: string;
+  version: string;
+}
+
 export interface JobSource {
   provider: ProviderId;
   name: string;

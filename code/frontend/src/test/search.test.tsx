@@ -6,6 +6,7 @@ import { COUNTRY_CODES, DEFAULT_FILTERS, type Job, type SearchResult } from "@/l
 import { formatSalary, postedAgo } from "@/lib/job-display";
 import JobDetailPanel from "@/components/JobDetailPanel";
 import Index from "@/pages/Index";
+import { RuntimeConfigProvider } from "@/context/runtime-config";
 
 const job: Job = {
   id: "himalayas:1", title: "Engineer", company: "Example", location: "Kenya",
@@ -18,6 +19,24 @@ const job: Job = {
 const result: SearchResult = { jobs: [job], count: 1, page: 1, pageSize: 10, hasMore: false, partial: false, limited: true, providers: [], countLabel: "loaded matches" };
 
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); cleanup(); });
+
+it("runtime company and repository links render from the server response", async () => {
+  vi.spyOn(apiClient, "publicConfig").mockResolvedValue({
+    repoUrl: "https://example.org/runtime-repo", companyName: "Runtime deployment",
+    companyUrl: "https://example.org/runtime-company", version: "1.0.0",
+  });
+  render(<RuntimeConfigProvider><Index /></RuntimeConfigProvider>);
+  expect(await screen.findByRole("link", { name: "Runtime deployment" })).toHaveAttribute("href", "https://example.org/runtime-company");
+  expect(screen.getAllByRole("link", { name: "GitHub" }).every((link) => link.getAttribute("href") === "https://example.org/runtime-repo")).toBe(true);
+  expect(screen.getByText("· v1.0.0")).toBeInTheDocument();
+});
+
+it("configuration failure offers retry instead of booting with baked deployment values", async () => {
+  vi.spyOn(apiClient, "publicConfig").mockRejectedValue(new Error("offline"));
+  render(<RuntimeConfigProvider><Index /></RuntimeConfigProvider>);
+  expect(await screen.findByRole("alert")).toHaveTextContent("Could not load JobFlow configuration");
+  expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+});
 
 describe("backend API client", () => {
   it("uses the same-origin backend route with the search contract", async () => {

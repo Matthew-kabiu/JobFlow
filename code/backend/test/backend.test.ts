@@ -7,6 +7,7 @@ import { createJsonFetcher, type JsonFetcher } from "../src/http.js";
 import { deduplicate, makeJob } from "../src/normalize.js";
 import { searchSchema } from "../src/search-schema.js";
 import { SearchService } from "../src/search.js";
+import { readConfig } from "../src/config.js";
 
 const created = "2026-01-01T00:00:00Z";
 function job(overrides: Partial<NonNullable<ReturnType<typeof makeJob>>> = {}) {
@@ -33,6 +34,25 @@ const jobicyItem = {
   id: 1, url: "https://jobicy.com/jobs/1", jobTitle: "Engineer", companyName: "Example",
   jobGeo: "Anywhere", jobDescription: "TypeScript", pubDate: created, jobIndustry: ["Software Engineering"], jobType: ["Full-Time"],
 };
+
+test("runtime public config is explicit, versioned, and never exposes provider secrets", async () => {
+  const config = readConfig({ BACKEND_HOST: "127.0.0.1", BACKEND_PORT: "12345",
+    PUBLIC_REPO_URL: "https://example.org/runtime-repo", PUBLIC_COMPANY_NAME: "Runtime company",
+    PUBLIC_COMPANY_URL: "https://example.org/runtime-company", HIMALAYAS_API_KEY: "test-secret-do-not-expose" });
+  const app = await buildApp([provider()], { publicConfig: {
+    repoUrl: config.PUBLIC_REPO_URL, companyName: config.PUBLIC_COMPANY_NAME, companyUrl: config.PUBLIC_COMPANY_URL,
+  } });
+  try {
+    const response = await app.inject("/api/v1/config");
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers["cache-control"], "no-store");
+    assert.equal(response.json().data.companyName, "Runtime company");
+    assert.equal(response.json().data.repoUrl, "https://example.org/runtime-repo");
+    assert.equal(response.json().data.version, (await app.inject("/health")).json().data.version);
+    assert.ok(!response.body.includes("test-secret"));
+    assert.deepEqual(Object.keys(response.json().data).sort(), ["companyName", "companyUrl", "repoUrl", "version"]);
+  } finally { await app.close(); }
+});
 
 test("search endpoint validates types, limits, country and salary ranges before calling providers", async () => {
   let calls = 0;

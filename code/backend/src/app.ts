@@ -5,8 +5,10 @@ import { searchSchema } from "./search-schema.js";
 import { SearchService } from "./search.js";
 import { ROUTES } from "./routes.js";
 import type { Provider } from "./providers.js";
+import type { PublicConfig } from "../../shared/contracts.js";
+import { VERSION } from "./version.js";
 
-export async function buildApp(providers: Provider[], options: { logger?: boolean; rateMax?: number } = {}) {
+export async function buildApp(providers: Provider[], options: { logger?: boolean; rateMax?: number; publicConfig?: Omit<PublicConfig, "version"> } = {}) {
   const app = Fastify({
     logger: options.logger ? { serializers: { req: (request: { method: string }) => ({ method: request.method }) } } : false,
     // The API is private behind exactly one Vite/Nginx proxy, never host-published.
@@ -24,7 +26,16 @@ export async function buildApp(providers: Provider[], options: { logger?: boolea
     reply.code(status).send({ success: false, error: status === 429 ? "RATE_LIMITED" : status < 500 ? "INVALID_REQUEST" : "INTERNAL_ERROR" });
   });
   app.setNotFoundHandler((_request, reply) => reply.code(404).send({ success: false, error: "NOT_FOUND" }));
-  app.get(ROUTES.health, { config: { rateLimit: false } }, async () => ({ success: true, data: { status: "ok" } }));
+  app.get(ROUTES.health, { config: { rateLimit: false } }, async () => ({ success: true, data: { status: "ok", version: VERSION } }));
+  app.get(ROUTES.config, async (_request, reply) => {
+    reply.header("Cache-Control", "no-store");
+    const values = options.publicConfig;
+    // Explicit allowlist: provider keys and other server settings never leave here.
+    return { success: true, data: {
+      repoUrl: values?.repoUrl ?? "", companyName: values?.companyName ?? "JobFlow",
+      companyUrl: values?.companyUrl ?? "", version: VERSION,
+    } satisfies PublicConfig };
+  });
   app.get(ROUTES.providers, async () => ({ success: true, data: providers.map(({ id, name, enabled }) => ({ id, name, enabled })) }));
   app.post(ROUTES.search, async (request, reply) => {
     const parsed = searchSchema.safeParse(request.body);

@@ -8,8 +8,10 @@ import { DEFAULT_FILTERS, type Job, type SearchFilters } from "@/lib/job-types";
 import { useJobSearch } from "@/hooks/use-job-search";
 import { toast } from "sonner";
 import { Search, ArrowLeft, ArrowRight, Github } from "lucide-react";
+import { useRuntimeConfig } from "@/lib/config/runtime-config";
 
 const Index = () => {
+  const config = useRuntimeConfig();
   const [filters, setFilters] = useState<SearchFilters>({ ...DEFAULT_FILTERS });
   const [applied, setApplied] = useState<SearchFilters>({ ...DEFAULT_FILTERS });
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -139,12 +141,14 @@ const Index = () => {
       </main>
       <footer className="mt-auto border-t border-border py-5">
         <div className="container mx-auto flex items-center justify-between px-4 text-xs text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} <a href="https://www.spookielabsinc.site/" target="_blank" rel="noopener noreferrer"
-            className="text-foreground underline underline-offset-2 hover:no-underline">SpookieLabsInc</a></p>
-          <a href="https://github.com/spooky-spectre/JobFlow" target="_blank" rel="noopener noreferrer"
+          <p>&copy; {new Date().getFullYear()} {config.companyUrl
+            ? <a href={config.companyUrl} target="_blank" rel="noopener noreferrer"
+                className="text-foreground underline underline-offset-2 hover:no-underline">{config.companyName}</a>
+            : config.companyName} {config.version && <span>· v{config.version}</span>}</p>
+          {config.repoUrl && <a href={config.repoUrl} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground" aria-label="GitHub">
             <Github className="h-3.5 w-3.5" strokeWidth={1.5} /><span>Open source</span>
-          </a>
+          </a>}
         </div>
       </footer>
     </div>

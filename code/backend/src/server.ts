@@ -8,7 +8,11 @@ try {
   const app = await buildApp(createProviders(createJsonFetcher(), {
     himalayasKey: config.HIMALAYAS_API_KEY,
     reliefwebAppname: config.RELIEFWEB_APPNAME,
-  }), { logger: true });
+  }), { logger: true, publicConfig: {
+    repoUrl: config.PUBLIC_REPO_URL,
+    companyName: config.PUBLIC_COMPANY_NAME,
+    companyUrl: config.PUBLIC_COMPANY_URL,
+  } });
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.once(signal, () => { void app.close().catch(() => { process.exitCode = 1; }); });
   }

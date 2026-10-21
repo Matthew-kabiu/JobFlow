@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: |
+            code/frontend/package-lock.json
+            code/backend/package-lock.json
+      - name: Install locked dependencies
+        run: |
+          npm ci --prefix code/backend
+          npm ci --prefix code/frontend
+      - name: Backend typecheck, tests, and build
+        working-directory: code/backend
+        run: |
+          npm run typecheck
+          npm test
+          npm run build
+      - name: Frontend lint, typechecks, tests, and build
+        working-directory: code/frontend
+        run: |
+          npm run lint
+          npx --no-install tsc --noEmit -p tsconfig.app.json
+          npx --no-install tsc --noEmit -p tsconfig.node.json
+          npm test
+          npm run build
+      - name: Validate release version on tags
+        if: startsWith(github.ref, 'refs/tags/')
+        run: node code/scripts/check-release.mjs "$GITHUB_REF_NAME"

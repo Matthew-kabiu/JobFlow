@@ -1,0 +1,49 @@
+# Production stack. All credentials from root .env; no fallbacks in this file.
+# Usage: docker compose -f docker-compose-prod.yml up -d
+
+services:
+  backend:
+    build:
+      context: ./code
+      dockerfile: backend/Dockerfile
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      BACKEND_PORT: ${BACKEND_PORT:?set in .env}
+      BACKEND_HOST: ${BACKEND_HOST:?set in .env}
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:' + process.env.BACKEND_PORT + '/health', {signal: AbortSignal.timeout(2000)}).then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    networks:
+      - jobflow
+  frontend:
+    build:
+      context: ./code
+      dockerfile: frontend/Dockerfile
+    environment:
+      BACKEND_ORIGIN: http://backend:${BACKEND_PORT:?set in .env}
+      NGINX_ENVSUBST_FILTER: BACKEND_ORIGIN
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${PORT}:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - jobflow
+
+networks:
+  jobflow:
+    driver: bridge

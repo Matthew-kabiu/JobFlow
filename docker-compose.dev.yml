@@ -1,0 +1,46 @@
+# Run from the repository root; see docs/DEVELOPMENT.md for setup.
+services:
+  backend:
+    build:
+      context: ./code
+      dockerfile: backend/Dockerfile.dev
+    volumes:
+      - ./code/backend:/app/backend:rw
+      - ./code/shared:/app/shared:ro
+      - /app/backend/node_modules
+    env_file:
+      - .env.development
+    environment:
+      NODE_ENV: development
+      BACKEND_PORT: ${BACKEND_PORT:?set in .env.development}
+      BACKEND_HOST: ${BACKEND_HOST:?set in .env.development}
+      CHOKIDAR_USEPOLLING: "true"
+    init: true
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:' + process.env.BACKEND_PORT + '/health', {signal: AbortSignal.timeout(2000)}).then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+  frontend:
+    build:
+      context: ./code
+      dockerfile: frontend/Dockerfile.dev
+      args:
+        VITE_DEV_PORT: ${VITE_DEV_PORT:?set in .env.development}
+    ports:
+      - "${FRONTEND_PORT:?set in .env.development}:${VITE_DEV_PORT:?set in .env.development}"
+    volumes:
+      - ./code/frontend:/app/frontend:rw
+      - ./code/shared:/app/shared:ro
+      - /app/frontend/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      VITE_DEV_PORT: ${VITE_DEV_PORT:?set in .env.development}
+      FRONTEND_PORT: ${FRONTEND_PORT:?set in .env.development}
+      CHOKIDAR_USEPOLLING: "true"
+      BACKEND_ORIGIN: http://backend:${BACKEND_PORT:?set in .env.development}
+    init: true

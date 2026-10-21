@@ -1,0 +1,62 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment files (secrets - do not commit)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Agent coordination files (local only — never push)
+SOP.md
+Changelog.md
+Agenthandoff.md
+STACK.md
+
+# Private project documents and verbatim reference templates
+PRIVATE/
+
+# Backup files and directories
+*.bak
+backups/
+*.dump
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# >>> stride (auto-managed, do not edit) >>>
+.claude/commands/linear/
+.claude/hooks/check_commit_widths.py
+.claude/hooks/do_commit.sh
+.claude/hooks/pretooluse/block_bare_git_commit.sh
+.claude/hooks/userpromptsubmit/inject_design_principles.sh
+.claude/skills/clear-speak/
+.claude/skills/commit/
+.claude/skills/craft/
+.claude/skills/vision/
+.claude/stride/docs/concepts/
+.claude/stride/docs/patterns/git/
+.claude/stride/docs/principles/
+.claude/tools/
+# <<< stride <<<

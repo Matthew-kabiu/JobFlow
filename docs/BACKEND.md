@@ -17,6 +17,7 @@ copy and never displays raw upstream errors.
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/health` | HTTP liveness (not upstream-provider health) |
+| GET | `/api/v1/config` | Runtime public links/branding and shipped manifest version |
 | GET | `/api/v1/providers` | Provider names and configuration-enabled flags |
 | POST | `/api/v1/jobs/search` | Validated, normalized multi-provider search |
 

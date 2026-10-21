@@ -29,7 +29,7 @@ class ApiClient {
       const body = await response.json();
       const parsed = publicConfigSchema.safeParse(body?.data);
       if (!response.ok || !body?.success || !parsed.success) throw new Error("Invalid configuration");
-      return parsed.data;
+      return parsed.data as PublicConfig;
     } catch {
       throw new ApiClientError("Could not load JobFlow configuration. Please try again.");
     }

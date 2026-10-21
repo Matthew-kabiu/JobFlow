@@ -1,13 +1,10 @@
-# Production stack. All credentials from root .env; no fallbacks in this file.
-# Usage: docker compose -f docker-compose-prod.yml up -d
-
+# Run published images. No source checkout/toolchain/build is required.
+# cp .env.example .env && docker compose up -d
+# Update: docker compose pull && docker compose up -d
 services:
   backend:
-    build:
-      context: ./code
-      dockerfile: backend/Dockerfile
-    env_file:
-      - .env
+    image: ghcr.io/matthew-kabiu/jobflow-backend:${JOBFLOW_VERSION:-latest}
+    env_file: .env
     environment:
       NODE_ENV: production
       BACKEND_PORT: ${BACKEND_PORT:?set in .env}
@@ -20,12 +17,8 @@ services:
       timeout: 3s
       retries: 3
       start_period: 15s
-    networks:
-      - jobflow
   frontend:
-    build:
-      context: ./code
-      dockerfile: frontend/Dockerfile
+    image: ghcr.io/matthew-kabiu/jobflow-frontend:${JOBFLOW_VERSION:-latest}
     environment:
       BACKEND_ORIGIN: http://backend:${BACKEND_PORT:?set in .env}
       NGINX_ENVSUBST_FILTER: BACKEND_ORIGIN
@@ -33,7 +26,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "${PORT}:80"
+      - "${PORT:?set in .env}:80"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
@@ -41,9 +34,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-    networks:
-      - jobflow
-
-networks:
-  jobflow:
-    driver: bridge

@@ -13,7 +13,8 @@ the repository root.
 ## Configuration
 
 Create or update the root, gitignored `.env.development` with your approved
-values. This implementation does not create or modify any environment file.
+values, using `.env.development.example` as the starting point. Released images
+use a separate root `.env`, based on `.env.example`.
 
 | Variable | Purpose |
 | --- | --- |
@@ -23,6 +24,7 @@ values. This implementation does not create or modify any environment file.
 | `BACKEND_HOST` | Backend bind address; use the all-interfaces bind address for Docker |
 | `HIMALAYAS_API_KEY` | Optional free key for an individual API allowance; backend only |
 | `RELIEFWEB_APPNAME` | Optional, pre-approved application name; omit to keep ReliefWeb disabled |
+| `PUBLIC_REPO_URL`, `PUBLIC_COMPANY_NAME`, `PUBLIC_COMPANY_URL` | Public runtime links/branding, served by the API |
 
 The all-interfaces bind address is `0.0.0.0`. Choose valid TCP port numbers for
 the three port variables. Browser and Vite ports may differ. Provider credentials
@@ -80,12 +82,13 @@ not part of `npm test`. Do not repeatedly run it: restarts discard provider cach
 
 ## Production configuration
 
-`docker-compose-prod.yml` builds the API and SPA separately. Configure `PORT`
+`docker-compose.yml` pulls the released API and SPA images. Configure `PORT`
 (browser-facing frontend port), `BACKEND_PORT`, `BACKEND_HOST`, and any approved
 optional provider settings in the root production environment. Only the frontend
 is host-published. Nginx substitutes `BACKEND_ORIGIN` into its template at startup
-and forwards `/api/` without the SPA fallback. Production builds require owner
-approval; the build definitions do not imply a deployment has been performed.
+and forwards `/api/` without the SPA fallback. Choose a published tag with
+`JOBFLOW_VERSION` (unset means `latest`). The release workflow owns production
+builds; the deployment host does not compile source.
 
 Backend proxy trust is exactly one hop. Keep the API private behind Vite/Nginx;
 publishing it directly would change that trust boundary. Nginx overwrites the
@@ -94,5 +97,6 @@ Recreate the frontend along with a replaced backend so Nginx resolves its curren
 service address.
 
 See [BACKEND.md](BACKEND.md) for endpoints, provider behavior, and current limits.
+See [RELEASING.md](RELEASING.md) for release verification and host migration.
 Verbatim build templates and the provider decision record remain in gitignored
 `docs/PRIVATE/` and are excluded from Docker builds.

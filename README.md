@@ -23,7 +23,7 @@ Review `.env` before starting. Open `http://localhost:${PORT}` using the configu
 host port. Himalayas and Jobicy need no API key. Leave `RELIEFWEB_APPNAME` blank
 unless ReliefWeb has approved your app name.
 
-Pin an exact release by setting `JOBFLOW_VERSION=1.0.0` in `.env`. If it is unset,
+Pin an exact release by setting `JOBFLOW_VERSION=1.1.0` in `.env`. If it is unset,
 Compose uses `latest`. Available image tags are the exact version, major/minor,
 and `latest`; the platform is `linux/amd64`.
 

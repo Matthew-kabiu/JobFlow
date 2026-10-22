@@ -1,290 +1,76 @@
-import { Search, MapPin, Banknote, Loader2, SlidersHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  JOB_CATEGORIES,
-  JOB_TYPES_FOR_UI,
-  COUNTRY_CODES,
-  getCountryFlag,
-  type SortOption,
-  type SearchFilters,
-} from "@/lib/job-types";
-import { useState } from "react";
+import { Globe2, MapPin, RotateCcw, Search, SlidersHorizontal } from "lucide-react";
+import { COUNTRY_CODES, type SearchFilters } from "@/lib/job-types";
+import { activeFilters } from "@/lib/search-filters";
+import { AppSelect } from "@/components/ui/app-select";
 
-interface HeroSearchProps {
-  keyword: string;
-  location: string;
-  countryCode: string;
-  whatExclude: string;
-  category: string;
-  jobType: string;
-  salaryMin: string;
-  salaryMax: string;
-  salaryCurrency: string;
-  salaryPeriod: SearchFilters["salaryPeriod"];
-  sort: SortOption;
-  onKeywordChange: (val: string) => void;
-  onLocationChange: (val: string) => void;
-  onCountryCodeChange: (val: string) => void;
-  onWhatExcludeChange: (val: string) => void;
-  onCategoryChange: (val: string) => void;
-  onJobTypeChange: (val: string) => void;
-  onSalaryMinChange: (val: string) => void;
-  onSalaryMaxChange: (val: string) => void;
-  onSalaryCurrencyChange: (val: string) => void;
-  onSalaryPeriodChange: (val: SearchFilters["salaryPeriod"]) => void;
-  onSortChange: (val: SortOption) => void;
+interface Props {
+  filters: SearchFilters;
+  onChange: <K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) => void;
   onSearch: () => void;
-  totalJobs: number;
-  isSearching?: boolean;
+  onReset: () => void;
+  onOpenFilters: () => void;
+  canReset: boolean;
+  compact: boolean;
+  isSearching: boolean;
 }
 
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: "relevance", label: "Relevance" },
-  { value: "date", label: "Most Recent" },
-  { value: "salary_asc", label: "Salary: Low to High" },
-  { value: "salary_desc", label: "Salary: High to Low" },
-];
-
-const HeroSearch = ({
-  keyword,
-  location,
-  countryCode,
-  whatExclude,
-  category,
-  jobType,
-  salaryMin,
-  salaryMax,
-  salaryCurrency,
-  salaryPeriod,
-  sort,
-  onKeywordChange,
-  onLocationChange,
-  onCountryCodeChange,
-  onWhatExcludeChange,
-  onCategoryChange,
-  onJobTypeChange,
-  onSalaryMinChange,
-  onSalaryMaxChange,
-  onSalaryCurrencyChange,
-  onSalaryPeriodChange,
-  onSortChange,
-  onSearch,
-  totalJobs,
-  isSearching = false,
-}: HeroSearchProps) => {
-  const [showFilters, setShowFilters] = useState(false);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      onSearch();
-    }
-  };
-
+export default function HeroSearch({ filters, onChange, onSearch, onReset, onOpenFilters, canReset, compact, isSearching }: Props) {
+  const count = activeFilters(filters).length;
   return (
-    <section className="border-b border-border bg-secondary/40">
-      <div className="container mx-auto max-w-4xl px-4 py-8 md:py-10">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-            Find your next role
-          </h1>
-          <p className="mt-1.5 text-sm text-muted-foreground">
-            {totalJobs > 0
-               ? `${totalJobs.toLocaleString()} matches in the loaded listings`
-               : "Worldwide, remote, and African opportunities"}
-          </p>
+    <section className={`search-hero ${compact ? "search-hero-compact" : ""}`} id="job-search" aria-labelledby="search-heading">
+      <div className="app-shell hero-grid">
+        <div className="hero-copy">
+          {!compact && <p className="hero-eyebrow"><span />A wider world of work</p>}
+          <h1 id="search-heading">{compact ? "Find your next role." : <>Your next role.<br /><span>A wider world.</span></>}</h1>
+          <p>{compact ? "One focused search. Opportunities from multiple sources." : "Search worldwide, remote, and African opportunities in one focused place."}</p>
         </div>
+        {!compact && <figure className="hero-visual">
+          <img src="/images/workspace.jpg" alt="A modern shared workspace with glass offices and open space" width="1200" height="801" loading="eager" />
+          <figcaption><Globe2 size={15} />Opportunities beyond one job board.</figcaption>
+        </figure>}
 
-        <div className="mx-auto max-w-3xl">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" strokeWidth={1.5} />
-              <Input
-                 placeholder="Job title, keyword, or company"
-                 aria-label="Job title, keyword, or company"
-                 maxLength={200}
-                value={keyword}
-                onChange={(e) => onKeywordChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="h-12 border-border bg-card pl-10 text-sm shadow-sm"
-              />
+        <div className="hero-search-area">
+          <form className="search-bar" onSubmit={(event) => { event.preventDefault(); if (!isSearching) onSearch(); }}>
+            <div className="search-field search-keyword">
+              <Search size={20} strokeWidth={1.5} />
+              <div><label htmlFor="search-keyword">What are you looking for?</label>
+                <input id="search-keyword" placeholder="Job title, keyword, or company" aria-label="Job title, keyword, or company"
+                  value={filters.keyword} maxLength={200} onChange={(event) => onChange("keyword", event.target.value)} />
+              </div>
             </div>
-            <div className="relative hidden w-52 sm:block">
-              <MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" strokeWidth={1.5} />
-              <Input
-                 placeholder="City or region"
-                 aria-label="City or region"
-                 maxLength={200}
-                value={location}
-                onChange={(e) => onLocationChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="h-12 border-border bg-card pl-10 text-sm shadow-sm"
-              />
+            <div className="search-field">
+              <MapPin size={20} strokeWidth={1.5} />
+              <div><label htmlFor="search-location">City or region</label>
+                <input id="search-location" placeholder="Any location" value={filters.location} maxLength={200}
+                  onChange={(event) => onChange("location", event.target.value)} />
+              </div>
             </div>
-            <Button
-              onClick={onSearch}
-              disabled={isSearching}
-              className="h-12 px-6 bg-foreground text-background hover:bg-foreground/90 font-medium"
-            >
-              {isSearching ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                 <><Search className="mr-2 h-4 w-4" />Search</>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setShowFilters(!showFilters)}
-              className="h-12 w-12 border-border bg-card shadow-sm"
-               aria-label="Toggle filters"
-               title="Toggle filters"
-               aria-expanded={showFilters}
-            >
-              <SlidersHorizontal className="h-4 w-4" strokeWidth={1.5} />
-            </Button>
+            <div className="search-field search-country">
+              <Globe2 size={20} strokeWidth={1.5} />
+              <div><label htmlFor="search-country">Country</label>
+                <AppSelect id="search-country" label="Country" value={filters.country_code} onChange={(value) => onChange("country_code", value)}
+                  options={COUNTRY_CODES.map(({ code, label }) => ({ value: code, label }))} />
+              </div>
+            </div>
+            <button type="submit" className="ui-button ui-button-primary search-submit" disabled={isSearching}>
+              <Search size={18} strokeWidth={1.8} />{isSearching ? "Searching…" : "Search"}
+            </button>
+          </form>
+          <div className="search-tools">
+            <p>Find the role here. Apply at the original source.</p>
+            <div>
+              <button type="button" className="ui-button ui-button-quiet" onClick={onOpenFilters} data-filter-trigger>
+                <SlidersHorizontal size={16} />Filters{count > 0 && <span className="filter-count">{count}</span>}
+              </button>
+              <span className="tool-divider" />
+              <button type="button" className="ui-button ui-button-quiet reset-button" onClick={onReset} disabled={!canReset}
+                title="Clear all search fields and return to the start">
+                <RotateCcw size={15} />Reset filters
+              </button>
+            </div>
           </div>
-
-          {showFilters && (
-            <div className="mt-3 grid gap-3 rounded-lg border border-border bg-card p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Country</label>
-                <Select value={countryCode || "all"} onValueChange={onCountryCodeChange}>
-                  <SelectTrigger className="h-9 bg-secondary text-sm" aria-label="Country">
-                    <SelectValue>
-                      {countryCode
-                         ? `${getCountryFlag(countryCode)} ${COUNTRY_CODES.find((c) => c.code === countryCode)?.label ?? countryCode}`
-                        : "Select country"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRY_CODES.map(({ code, label }) => (
-                      <SelectItem key={code} value={code}>
-                        <span className="flex items-center gap-2">
-                          <span className="text-lg leading-none">{getCountryFlag(code)}</span>
-                          <span>{label}</span>
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Category</label>
-                <Select value={category || "all"} onValueChange={onCategoryChange}>
-                  <SelectTrigger className="h-9 bg-secondary text-sm">
-                    <SelectValue placeholder="All categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All categories</SelectItem>
-                    {JOB_CATEGORIES.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Job type</label>
-                <Select value={jobType || "all"} onValueChange={onJobTypeChange}>
-                  <SelectTrigger className="h-9 bg-secondary text-sm">
-                    <SelectValue placeholder="All types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All types</SelectItem>
-                    {JOB_TYPES_FOR_UI.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Sort by</label>
-                <Select value={sort} onValueChange={(v) => onSortChange(v as SortOption)}>
-                  <SelectTrigger className="h-9 bg-secondary text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SORT_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5 sm:col-span-2 lg:col-span-2">
-                <label className="text-xs font-medium text-muted-foreground">Exclude keyword</label>
-                <Input
-                  placeholder="e.g. Java"
-                  value={whatExclude}
-                  onChange={(e) => onWhatExcludeChange(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="h-9 bg-secondary text-sm"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Salary min ({salaryCurrency} / {salaryPeriod})</label>
-                <div className="relative">
-                  <Banknote className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" strokeWidth={1.5} />
-                  <Input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Min"
-                    value={salaryMin}
-                    onChange={(e) => onSalaryMinChange(e.target.value.replace(/\D/g, ""))}
-                    onKeyDown={handleKeyDown}
-                    className="h-9 bg-secondary pl-8 text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Salary max</label>
-                <div className="relative">
-                  <Banknote className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" strokeWidth={1.5} />
-                  <Input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Max"
-                    value={salaryMax}
-                    onChange={(e) => onSalaryMaxChange(e.target.value.replace(/\D/g, ""))}
-                    onKeyDown={handleKeyDown}
-                    className="h-9 bg-secondary pl-8 text-sm"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label htmlFor="salary-currency" className="text-xs font-medium text-muted-foreground">Salary currency</label>
-                <select id="salary-currency" value={salaryCurrency} onChange={(event) => onSalaryCurrencyChange(event.target.value)}
-                  className="h-9 w-full rounded border border-border bg-secondary px-2 text-sm">
-                  {["USD", "KES", "GBP", "EUR", "ZAR", "CAD", "AUD"].map((currency) => <option key={currency}>{currency}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label htmlFor="salary-period" className="text-xs font-medium text-muted-foreground">Pay period</label>
-                <select id="salary-period" value={salaryPeriod}
-                  onChange={(event) => onSalaryPeriodChange(event.target.value as SearchFilters["salaryPeriod"])}
-                  className="h-9 w-full rounded border border-border bg-secondary px-2 text-sm">
-                  {["annual", "monthly", "fortnightly", "weekly", "hourly"].map((period) => <option key={period}>{period}</option>)}
-                </select>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </section>
   );
-};
-
-export default HeroSearch;
+}

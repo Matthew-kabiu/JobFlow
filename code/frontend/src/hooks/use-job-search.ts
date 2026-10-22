@@ -28,5 +28,13 @@ export function useJobSearch() {
     }
   }, []);
 
-  return { result, isSearching, error, search };
+  const reset = useCallback(() => {
+    request.current?.abort();
+    request.current = null;
+    setResult(null);
+    setError(null);
+    setIsSearching(false);
+  }, []);
+
+  return { result, isSearching, error, search, reset };
 }

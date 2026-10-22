@@ -2,7 +2,7 @@ import type { Job } from "@/lib/job-types";
 
 export function JobSources({ job }: { job: Job }) {
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+    <div className="job-sources">
       <span>Source:</span>
       {job.sources.map((source) => (
         <a key={`${source.provider}:${source.url}`} href={source.url} target="_blank" rel="noopener noreferrer"

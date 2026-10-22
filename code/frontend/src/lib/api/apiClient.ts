@@ -1,6 +1,6 @@
 import type { SearchFilters, SearchResult } from "@/lib/job-types";
 import { ROUTES } from "@/lib/routes";
-import type { PublicConfig } from "../../../../shared/contracts";
+import type { CurrencyCatalogue, PublicConfig } from "../../../../shared/contracts";
 import { z } from "zod";
 
 const publicUrl = z.union([z.literal(""), z.string().url().refine((value) => {
@@ -9,6 +9,10 @@ const publicUrl = z.union([z.literal(""), z.string().url().refine((value) => {
 })]);
 const publicConfigSchema = z.object({
   repoUrl: publicUrl, companyUrl: publicUrl, companyName: z.string().max(120), version: z.string().max(40),
+});
+const currencyCatalogueSchema = z.object({
+  currencies: z.array(z.object({ code: z.string().regex(/^[A-Z]{3}$/), name: z.string().min(1).max(120), symbol: z.string().max(12) })).min(1),
+  source: z.enum(["currency-api", "built-in"]), fetchedAt: z.string().nullable(),
 });
 
 const messages: Record<string, string> = {
@@ -20,6 +24,19 @@ const messages: Record<string, string> = {
 export class ApiClientError extends Error {}
 
 class ApiClient {
+  async currencies(signal?: AbortSignal): Promise<CurrencyCatalogue> {
+    try {
+      const timeout = AbortSignal.timeout(20_000);
+      const response = await fetch(ROUTES.api.currencies, { signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
+      const body = await response.json();
+      const parsed = currencyCatalogueSchema.safeParse(body?.data);
+      if (!response.ok || !body?.success || !parsed.success) throw new Error("Invalid catalogue");
+      return parsed.data as CurrencyCatalogue;
+    } catch {
+      throw new ApiClientError("The full currency list could not be loaded.");
+    }
+  }
+
   async publicConfig(signal?: AbortSignal): Promise<PublicConfig> {
     try {
       const timeout = AbortSignal.timeout(8_000);

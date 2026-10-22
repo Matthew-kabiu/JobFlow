@@ -18,6 +18,7 @@ copy and never displays raw upstream errors.
 | --- | --- | --- |
 | GET | `/health` | HTTP liveness (not upstream-provider health) |
 | GET | `/api/v1/config` | Runtime public links/branding and shipped manifest version |
+| GET | `/api/v1/currencies` | Cached ISO salary-currency catalogue with built-in fallback |
 | GET | `/api/v1/providers` | Provider names and configuration-enabled flags |
 | POST | `/api/v1/jobs/search` | Validated, normalized multi-provider search |
 
@@ -130,6 +131,27 @@ Adzuna is not enabled in this replacement. Its current
 review for ongoing commercial use. No paid provider or scraping proxy is used.
 
 ## Operational bounds
+
+### Currency catalogue (source-development update)
+
+The custom currency picker uses the same-origin `/api/v1/currencies` endpoint.
+The backend reads the no-key [Free Currency API](https://github.com/fawazahmed0/exchange-api)
+catalogue from jsDelivr, then its documented Cloudflare fallback if needed.
+Successful results are cached for 24 hours with single-flight loading. Failed
+loads use the existing short cache cooldown and return a full built-in ISO list.
+
+The picker includes supported fiat currencies only, excluding cryptocurrencies,
+precious metals, and test/unknown codes. ISO display names and locale symbols
+avoid collisions in the upstream catalogue. The response reports `currencies`
+(`code`, `name`, `symbol`), `source`, and `fetchedAt`.
+
+This is a currency **picker**, not currency conversion. Salary filtering and
+sorting still compare only the selected currency and pay period. No rate endpoint
+or paid service is used, and no new environment settings are needed. This endpoint
+and the corresponding UI are local source changes after the v1.0.0 release;
+publish both images together when releasing them.
+
+### Request and cache bounds
 
 - Fixed provider endpoints; browsers cannot supply an arbitrary upstream URL.
 - Eight-second timeout and eight-megabyte maximum per upstream response.

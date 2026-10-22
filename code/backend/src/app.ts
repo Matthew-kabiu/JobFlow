@@ -5,10 +5,11 @@ import { searchSchema } from "./search-schema.js";
 import { SearchService } from "./search.js";
 import { ROUTES } from "./routes.js";
 import type { Provider } from "./providers.js";
-import type { PublicConfig } from "../../shared/contracts.js";
+import type { CurrencyCatalogue, PublicConfig } from "../../shared/contracts.js";
 import { VERSION } from "./version.js";
+import { builtInCurrencies } from "./currencies.js";
 
-export async function buildApp(providers: Provider[], options: { logger?: boolean; rateMax?: number; publicConfig?: Omit<PublicConfig, "version"> } = {}) {
+export async function buildApp(providers: Provider[], options: { logger?: boolean; rateMax?: number; publicConfig?: Omit<PublicConfig, "version">; currencyCatalogue?: () => Promise<CurrencyCatalogue> } = {}) {
   const app = Fastify({
     logger: options.logger ? { serializers: { req: (request: { method: string }) => ({ method: request.method }) } } : false,
     // The API is private behind exactly one Vite/Nginx proxy, never host-published.
@@ -37,6 +38,10 @@ export async function buildApp(providers: Provider[], options: { logger?: boolea
     } satisfies PublicConfig };
   });
   app.get(ROUTES.providers, async () => ({ success: true, data: providers.map(({ id, name, enabled }) => ({ id, name, enabled })) }));
+  app.get(ROUTES.currencies, async (_request, reply) => {
+    reply.header("Cache-Control", "no-store");
+    return { success: true, data: options.currencyCatalogue ? await options.currencyCatalogue() : builtInCurrencies() };
+  });
   app.post(ROUTES.search, async (request, reply) => {
     const parsed = searchSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ success: false, error: "INVALID_SEARCH" });

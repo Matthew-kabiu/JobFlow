@@ -9,6 +9,18 @@ export interface PublicConfig {
   version: string;
 }
 
+export interface Currency {
+  code: string;
+  name: string;
+  symbol: string;
+}
+
+export interface CurrencyCatalogue {
+  currencies: Currency[];
+  source: "currency-api" | "built-in";
+  fetchedAt: string | null;
+}
+
 export interface JobSource {
   provider: ProviderId;
   name: string;

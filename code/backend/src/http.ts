@@ -1,6 +1,6 @@
 import type { ProviderId } from "../../shared/contracts.js";
 
-export type JsonFetcher = (provider: ProviderId, url: URL, headers?: Record<string, string>) => Promise<unknown>;
+export type JsonFetcher = (provider: ProviderId | "currencies", url: URL, headers?: Record<string, string>) => Promise<unknown>;
 
 /** Global per-provider budgets protect free allowances even across different search queries. */
 export function createJsonFetcher(fetcher: typeof fetch = fetch, now = Date.now): JsonFetcher {
